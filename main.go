@@ -170,6 +170,12 @@ func SetUpRoutes(app *fiber.App, logger *slog.Logger) {
 	route.SetupCertificationRoutes(app, config.JWT_SECRET)
 	route.SetupAdminRoutes(app, config.AdminPass, config.JWT_SECRET)
 
+	app.Get("/api/test123", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"message": "Working fine",
+		})
+	})
+
 	app.Get("/api/leetcode", FetchLeetCodeData)
 	app.Get("/api/github", FetchGitHubProfile)
 	app.Get("/api/github/commits", FetchGitHubCommits)
