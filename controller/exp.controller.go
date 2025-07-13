@@ -142,5 +142,16 @@ func RemoveExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to remove experience", nil, "")
 	}
 
+	expObjID, err := primitive.ObjectIDFromHex(eid)
+	if err != nil {
+		return util.ResponseAPI(c, fiber.StatusBadRequest, "Invalid experience ID", nil, "")
+	}
+
+	proj := &models.Experience{}
+	proj.SetID(expObjID)
+	if err := mgm.Coll(proj).Delete(proj); err != nil {
+		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to delete experience", nil, "")
+	}
+
 	return util.ResponseAPI(c, fiber.StatusOK, "Experience removed successfully", nil, "")
 }
