@@ -97,7 +97,7 @@ func gracefulShutdown(app *fiber.App, logger *slog.Logger) {
 }
 
 func init() {
-	currEnv := "!development"
+	currEnv := "development"
 
 	if currEnv == "development" {
 		if err := godotenv.Load(); err != nil {

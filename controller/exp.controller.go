@@ -21,7 +21,16 @@ func GetExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusOK, "No experiences found", nil, "")
 	}
 
+	exps = reverseExperiences(exps)
+
 	return util.ResponseAPI(c, fiber.StatusOK, "Experiences retrieved successfully", exps, "")
+}
+
+func reverseExperiences(exps []models.Experience) []models.Experience {
+	for i, j := 0, len(exps)-1; i < j; i, j = i+1, j-1 {
+		exps[i], exps[j] = exps[j], exps[i]
+	}
+	return exps
 }
 
 func GetExperienceByID(c *fiber.Ctx) error {
