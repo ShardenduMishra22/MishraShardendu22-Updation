@@ -21,6 +21,10 @@ func GetProjects(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusOK, "No projects found", nil, "")
 	}
 
+	for i, j := 0, len(projects)-1; i < j; i, j = i+1, j-1 {
+		projects[i], projects[j] = projects[j], projects[i]
+	}
+
 	return util.ResponseAPI(c, fiber.StatusOK, "Projects retrieved successfully", projects, "")
 }
 
