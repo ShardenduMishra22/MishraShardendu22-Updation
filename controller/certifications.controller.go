@@ -21,7 +21,16 @@ func GetCertifications(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusOK, "No certifications found", nil, "")
 	}
 
+	certs = reverseCerts(certs)
+
 	return util.ResponseAPI(c, fiber.StatusOK, "Certifications retrieved successfully", certs, "")
+}
+
+func reverseCerts(certs []models.CertificationOrAchievements) []models.CertificationOrAchievements {
+	for i, j := 0, len(certs)-1; i < j; i, j = i+1, j-1 {
+		certs[i], certs[j] = certs[j], certs[i]
+	}
+	return certs
 }
 
 func GetCertificationByID(c *fiber.Ctx) error {
