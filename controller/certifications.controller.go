@@ -111,9 +111,10 @@ func UpdateCertification(c *fiber.Ctx) error {
 }
 
 func RemoveCertification(c *fiber.Ctx) error {
-	// Since there's only one user, get the first user from the database
+	// Fetch first (and only) user
 	var user models.User
-	if err := mgm.Coll(&models.User{}).First(bson.M{}, &user); err != nil {
+	userColl := mgm.Coll(&models.User{})
+	if err := userColl.First(bson.M{}, &user); err != nil {
 		return util.ResponseAPI(c, fiber.StatusNotFound, "User not found", nil, "")
 	}
 
@@ -127,17 +128,29 @@ func RemoveCertification(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusBadRequest, "Invalid certification ID", nil, "")
 	}
 
-	filtered := make([]primitive.ObjectID, 0, len(user.Certifications))
+	// Filter certification ID
+	newCerts := make([]primitive.ObjectID, 0, len(user.Certifications))
 	for _, id := range user.Certifications {
 		if id != certObjID {
-			filtered = append(filtered, id)
+			newCerts = append(newCerts, id)
 		}
 	}
+	user.Certifications = newCerts
 
-	user.Certifications = filtered
-	if err := mgm.Coll(&models.User{}).Update(&user); err != nil {
-		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to remove certification from user", nil, "")
+	// Save updated user
+	if err := userColl.Update(&user); err != nil {
+		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to update user certifications", nil, "")
 	}
+
+	// Delete the certification document
+	certColl := mgm.Coll(&models.CertificationOrAchievements{})
+	cert := &models.CertificationOrAchievements{}
+	cert.SetID(certObjID)
+
+	if err := certColl.Delete(cert); err != nil {
+		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to delete certification", nil, "")
+	}
+
 
 	return util.ResponseAPI(c, fiber.StatusOK, "Certification removed successfully", nil, "")
 }
