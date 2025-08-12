@@ -16,7 +16,7 @@ import (
 )
 
 var httpClient = &http.Client{Timeout: 10 * time.Second}
-var maxWorkers = int64(15)
+var maxWorkers = int64(5)
 
 type RepoInfo struct {
 	Name            string `json:"name"`
