@@ -10,8 +10,6 @@ import (
 )
 
 func GetExperiences(c *fiber.Ctx) error {
-	// Since there's only one user and we want public access,
-	// fetch all experiences directly from the database
 	var exps []models.Experience
 	if err := mgm.Coll(&models.Experience{}).SimpleFind(&exps, bson.M{}); err != nil {
 		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to fetch experiences", nil, "")
@@ -21,16 +19,8 @@ func GetExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusOK, "No experiences found", nil, "")
 	}
 
-	exps = reverseExperiences(exps)
-
+	exps = ReverseExperiences(exps)
 	return util.ResponseAPI(c, fiber.StatusOK, "Experiences retrieved successfully", exps, "")
-}
-
-func reverseExperiences(exps []models.Experience) []models.Experience {
-	for i, j := 0, len(exps)-1; i < j; i, j = i+1, j-1 {
-		exps[i], exps[j] = exps[j], exps[i]
-	}
-	return exps
 }
 
 func GetExperienceByID(c *fiber.Ctx) error {
@@ -58,7 +48,7 @@ func AddExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusBadRequest, "Invalid request body", nil, "")
 	}
 
-	if e.CompanyName == "" || e.Position == "" || e.StartDate == "" {
+	if e.CompanyName == "" || len(e.ExperienceTimeline) == 0 {
 		return util.ResponseAPI(c, fiber.StatusBadRequest, "Company name, position and start date are required", nil, "")
 	}
 
@@ -66,7 +56,6 @@ func AddExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to add experience", nil, "")
 	}
 
-	// Since there's only one user, get the first user from the database
 	var user models.User
 	if err := mgm.Coll(&models.User{}).First(bson.M{}, &user); err != nil {
 		return util.ResponseAPI(c, fiber.StatusNotFound, "User not found", nil, "")
@@ -96,32 +85,35 @@ func UpdateExperiences(c *fiber.Ctx) error {
 		return util.ResponseAPI(c, fiber.StatusBadRequest, "Invalid request body", nil, "")
 	}
 
-	if input.CompanyName == "" || input.Position == "" || input.StartDate == "" {
-		return util.ResponseAPI(c, fiber.StatusBadRequest, "Company name, position and start date are required", nil, "")
+	if input.CompanyName == "" || len(input.ExperienceTimeline) == 0 {
+		return util.ResponseAPI(c, fiber.StatusBadRequest, "Company name and at least one timeline entry are required", nil, "")
 	}
 
-	update := bson.M{"$set": bson.M{
-		"company_name":    input.CompanyName,
-		"position":        input.Position,
-		"start_date":      input.StartDate,
-		"end_date":        input.EndDate,
-		"description":     input.Description,
-		"technologies":    input.Technologies,
-		"company_logo":    input.CompanyLogo,
-		"certificate_url": input.CertificateURL,
-		"images":          input.Images,
-		"projects":        input.Projects,
-	}}
+	var existing models.Experience
+	if err := mgm.Coll(&models.Experience{}).FindByID(expObjID, &existing); err != nil {
+		return util.ResponseAPI(c, fiber.StatusNotFound, "Experience not found", nil, "")
+	}
 
-	if _, err := mgm.Coll(&models.Experience{}).UpdateByID(c.Context(), expObjID, update); err != nil {
+	// Append new timeline entries instead of overwriting
+	existing.ExperienceTimeline = append(existing.ExperienceTimeline, input.ExperienceTimeline...)
+
+	// Update other fields
+	existing.CompanyName = input.CompanyName
+	existing.Description = input.Description
+	existing.Technologies = input.Technologies
+	existing.Projects = input.Projects
+	existing.CompanyLogo = input.CompanyLogo
+	existing.CertificateURL = input.CertificateURL
+	existing.Images = input.Images
+
+	if err := mgm.Coll(&models.Experience{}).Update(&existing); err != nil {
 		return util.ResponseAPI(c, fiber.StatusInternalServerError, "Failed to update experience", nil, "")
 	}
 
-	return util.ResponseAPI(c, fiber.StatusOK, "Experience updated successfully", input, "")
+	return util.ResponseAPI(c, fiber.StatusOK, "Experience updated successfully", existing, "")
 }
 
 func RemoveExperiences(c *fiber.Ctx) error {
-	// Since there's only one user, get the first user from the database
 	var user models.User
 	if err := mgm.Coll(&models.User{}).First(bson.M{}, &user); err != nil {
 		return util.ResponseAPI(c, fiber.StatusNotFound, "User not found", nil, "")

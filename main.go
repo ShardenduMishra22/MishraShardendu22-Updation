@@ -1,23 +1,23 @@
 package main
 
 import (
-	"context"
-	"log"
-	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
+	"log"
 	"time"
+	"context"
+	"syscall"
+	"log/slog"
+	"os/signal"
 
-	"github.com/MishraShardendu22/database"
-	"github.com/MishraShardendu22/models"
-	"github.com/MishraShardendu22/route"
-	"github.com/MishraShardendu22/util"
+	"github.com/joho/godotenv"
 	"github.com/gofiber/fiber/v2"
+	"github.com/MishraShardendu22/util"
+	"github.com/MishraShardendu22/route"
+	"github.com/MishraShardendu22/models"
+	"github.com/MishraShardendu22/database"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/joho/godotenv"
 )
 
 func loadConfig() *models.Config {
@@ -97,7 +97,7 @@ func gracefulShutdown(app *fiber.App, logger *slog.Logger) {
 }
 
 func init() {
-	currEnv := "!development"
+	currEnv := "development"
 
 	if currEnv == "development" {
 		if err := godotenv.Load(); err != nil {
@@ -167,6 +167,7 @@ func SetUpRoutes(app *fiber.App, logger *slog.Logger) {
 	route.SetupExpRoutes(app, config.JWT_SECRET)
 	route.SetupSkillRoutes(app, config.JWT_SECRET)
 	route.SetupProjectRoutes(app, config.JWT_SECRET)
+	route.SetupVolunteerExpRoutes(app, config.JWT_SECRET)
 	route.SetupCertificationRoutes(app, config.JWT_SECRET)
 	route.SetupAdminRoutes(app, config.AdminPass, config.JWT_SECRET)
 
@@ -176,11 +177,11 @@ func SetUpRoutes(app *fiber.App, logger *slog.Logger) {
 		})
 	})
 
-	app.Get("/api/leetcode", FetchLeetCodeData)
 	app.Get("/api/github", FetchGitHubProfile)
+	app.Get("/api/leetcode", FetchLeetCodeData)
+	app.Get("/api/github/stars", FetchGitHubStars)
 	app.Get("/api/github/commits", FetchGitHubCommits)
 	app.Get("/api/github/languages", FetchGitHubLanguages)
-	app.Get("/api/github/stars", FetchGitHubStars)
 	app.Get("/api/github/top-repos", FetchTopStarredRepos)
 	app.Get("/api/github/calendar", FetchContributionCalendar)
 }
