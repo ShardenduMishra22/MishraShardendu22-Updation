@@ -31,18 +31,35 @@ func ExperienceTimeline(c *fiber.Ctx) error {
 	exps = ReverseExperiences(exps)
 	vexps = ReverseVolunteerExperiences(vexps)
 
-	var expTimeline []models.ExperienceTimeLine
-	var vexpTimeline []models.VolunteerExperienceTimeLine
+	var expTimeline []map[string]interface{}
+	var vexpTimeline []map[string]interface{}
 
 	for _, exp := range exps {
-		expTimeline = append(expTimeline, exp.ExperienceTimeline...)
+		for _, timeline := range exp.ExperienceTimeline {
+			timelineWithOrg := map[string]interface{}{
+				"position":     timeline.Position,
+				"start_date":   timeline.StartDate,
+				"end_date":     timeline.EndDate,
+				"company_name": exp.CompanyName,
+				"company_logo": exp.CompanyLogo,
+			}
+			expTimeline = append(expTimeline, timelineWithOrg)
+		}
 	}
 
 	for _, vexp := range vexps {
-		vexpTimeline = append(vexpTimeline, vexp.VolunteerTimeLine...)
+		for _, timeline := range vexp.VolunteerTimeLine {
+			timelineWithOrg := map[string]interface{}{
+				"position":          timeline.PositionOfAuthority,
+				"start_date":        timeline.StartDate,
+				"end_date":          timeline.EndDate,
+				"organisation":      vexp.Organisation,
+				"organisation_logo": vexp.OrganisationLogo,
+			}
+			vexpTimeline = append(vexpTimeline, timelineWithOrg)
+		}
 	}
 
-	// Combine both timelines or return them separately based on your requirements
 	response := map[string]interface{}{
 		"experience_timeline":           expTimeline,
 		"volunteer_experience_timeline": vexpTimeline,
