@@ -164,6 +164,7 @@ func main() {
 func SetUpRoutes(app *fiber.App, logger *slog.Logger) {
 	config := loadConfig()
 
+	route.SetupTimeline(app, config.JWT_SECRET)
 	route.SetupExpRoutes(app, config.JWT_SECRET)
 	route.SetupSkillRoutes(app, config.JWT_SECRET)
 	route.SetupProjectRoutes(app, config.JWT_SECRET)
